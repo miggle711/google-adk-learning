@@ -4,7 +4,7 @@ from google.adk.models.google_llm import Gemini
 from google.adk.tools.agent_tool import AgentTool
 from google.genai import types
 
-# Configure Model Retry on errors - following Kaggle pattern
+# Configure Model Retry on errors (thanks Kaggle!)
 retry_config = types.HttpRetryOptions(
     attempts=5,
     exp_base=7,
@@ -16,7 +16,8 @@ retry_config = types.HttpRetryOptions(
 DEFAULT_MODEL_NAME = "gemini-2.5-flash-lite"  
 
 def get_model():
-    """Returns the configured Gemini model."""
+    # returns the chosen model with retry config
+    # one point o change instead of scattering the model/configs acorss the project
     return Gemini(model=DEFAULT_MODEL_NAME, retry_options=retry_config)
 
 def create_researcher_agent() -> LlmAgent:
@@ -54,6 +55,10 @@ from pydantic import BaseModel, Field
 from typing import List
 
 class CritiqueOutput(BaseModel):
+    """
+    Schema for the output of the critique agent.
+    Fixed fields for standardized feedback:
+    """
     clarity_score: int = Field(description="Score for clarity from 1 to 10")
     rigor_score: int = Field(description="Score for academic rigor from 1 to 10")
     missing_areas: List[str] = Field(description="List of specific areas or themes that are missing")
@@ -80,7 +85,7 @@ def create_critique_agent() -> LlmAgent:
 def create_pi_agent() -> LlmAgent:
     """Creates the PI (Principal Investigator) agent which orchestrates the team."""
     
-    # Instantiate sub-agents and wrap them as tools
+    # Instantiate sub-agents and wrap them as tools for the orchestraror to use
     researcher_tool = AgentTool(agent=create_researcher_agent())
     lit_reviewer_tool = AgentTool(agent=create_lit_review_agent())
     critique_tool = AgentTool(agent=create_critique_agent())
@@ -92,14 +97,14 @@ def create_pi_agent() -> LlmAgent:
         instruction="""
         You are the Principal Investigator (PI). You manage a team of agents to conduct research.
         Your team consists of:
-        - `researcher`: Finds and summarizes academic papers.
-        - `lit_reviewer`: Writes the literature review draft.
-        - `critique_agent`: Provides feedback on the draft.
+        - `researcher`: Finds and summarises academic papers and journals
+        - `lit_reviewer`: Writes the literature review draft
+        - `critique_agent`: Provides feedback on the draft in a structured format
 
         Workflow:
         1. Ask the `researcher` to find and summarize papers on the user's topic.
-        2. If the `researcher` reports a rate limit (429) or other errors, inform the user clearly. Do not get stuck in a retry loop if the error persists.
-        3. Pass those summaries to the `lit_reviewer` to create a first draft.
+        2. If the `researcher` reports a rate limit (429) or other errors, inform the user clearly. Do not get stuck in an endlesloop if the error persists.
+        3. Pass the summaries to the `lit_reviewer` to create a first draft.
         4. Pass that draft to the `critique_agent` for review.
         5. If major improvements are needed, ask the `lit_reviewer` to revise.
         6. Present the final, polished review to the user.

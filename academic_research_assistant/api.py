@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 from academic_research_assistant.agents import create_pi_agent
 from google.adk.runners import Runner
-from google.adk.sessions import InMemorySessionService
+from academic_research_assistant.session_service import get_session_service
 from google.genai import types
 from dotenv import load_dotenv
 
@@ -23,7 +23,7 @@ app = FastAPI(
 )
 
 # Initialize services
-session_service = InMemorySessionService()
+session_service = get_session_service()
 app_name = "academic_research_assistant"
 
 class ResearchRequest(BaseModel):

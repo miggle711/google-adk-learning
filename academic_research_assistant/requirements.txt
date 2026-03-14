@@ -6,3 +6,4 @@ pymupdf
 semanticscholar
 requests
 pydantic
+redis>=4.6.0

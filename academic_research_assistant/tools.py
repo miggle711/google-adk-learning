@@ -81,58 +81,60 @@ def search_arxiv(query: str, limit: int = 3) -> str:
         logger.error(f"arXiv search error: {e}")
         return json.dumps({"error": f"An error occurred while searching arXiv: {e}"})
 
-def search_semantic_scholar(query: str, limit: int = 3) -> str:
-    """
-    Searches Semantic Scholar for papers matching a query and returns a summary.
-    
-    Args:
-        query: The search query (e.g., a topic or keyword).
-        limit: The maximum number of papers to return.
-    
-    Returns:
-        A JSON string summarizing the search results, or an error message.
-    """
-    logger.info(f"Searching Semantic Scholar for: '{query}' (limit={limit})")
-    try:
-        ss = SemanticScholar()
-        fields = ['title', 'url', 'abstract', 'authors', 'year', 'venue']
-        
-        # CRITICAL: Convert to list immediately to prevent automatic pagination
-        # The semanticscholar library returns a PaginatedResults object that
-        # automatically fetches more pages when iterated, causing rate limits
-        results_iter = ss.search_paper(query, limit=limit, fields=fields)
-        results = list(itertools.islice(results_iter, limit))
-        
-        if not results or len(results) == 0:
-            logger.warning(f"No papers found for query: '{query}'")
-            return json.dumps({"error": "No papers found for the query."})
 
-        logger.info(f"Found {len(results)} papers.")
+# TODO: This method doesnt work; rate limits + pagination fuccc up the results
+# def search_semantic_scholar(query: str, limit: int = 3) -> str:
+#     """
+#     Searches Semantic Scholar for papers matching a query and returns a summary.
+    
+#     Args:
+#         query: The search query (e.g., a topic or keyword).
+#         limit: The maximum number of papers to return.
+    
+#     Returns:
+#         A JSON string summarizing the search results, or an error message.
+#     """
+#     logger.info(f"Searching Semantic Scholar for: '{query}' (limit={limit})")
+#     try:
+#         ss = SemanticScholar()
+#         fields = ['title', 'url', 'abstract', 'authors', 'year', 'venue']
+        
+#         # CRITICAL: Convert to list immediately to prevent automatic pagination
+#         # The semanticscholar library returns a PaginatedResults object that
+#         # automatically fetches more pages when iterated, causing rate limits
+#         results_iter = ss.search_paper(query, limit=limit, fields=fields)
+#         results = list(itertools.islice(results_iter, limit))
+        
+#         if not results or len(results) == 0:
+#             logger.warning(f"No papers found for query: '{query}'")
+#             return json.dumps({"error": "No papers found for the query."})
 
-        # Format the results into a clear, summarized list
-        papers_summary = []
-        for paper in results:
-            # Paper objects use attribute access, not dictionary .get()
-            authors_list = []
-            if hasattr(paper, 'authors') and paper.authors:
-                authors_list = [author.name if hasattr(author, 'name') else str(author) for author in paper.authors]
+#         logger.info(f"Found {len(results)} papers.")
+
+#         # Format the results into a clear, summarized list
+#         papers_summary = []
+#         for paper in results:
+#             # Paper objects use attribute access, not dictionary .get()
+#             authors_list = []
+#             if hasattr(paper, 'authors') and paper.authors:
+#                 authors_list = [author.name if hasattr(author, 'name') else str(author) for author in paper.authors]
             
-            papers_summary.append({
-                "title": paper.title if hasattr(paper, 'title') else None,
-                "authors": authors_list,
-                "year": paper.year if hasattr(paper, 'year') else None,
-                "venue": paper.venue if hasattr(paper, 'venue') else None,
-                "url": paper.url if hasattr(paper, 'url') else None,
-                "abstract": paper.abstract if hasattr(paper, 'abstract') else None
-            })
+#             papers_summary.append({
+#                 "title": paper.title if hasattr(paper, 'title') else None,
+#                 "authors": authors_list,
+#                 "year": paper.year if hasattr(paper, 'year') else None,
+#                 "venue": paper.venue if hasattr(paper, 'venue') else None,
+#                 "url": paper.url if hasattr(paper, 'url') else None,
+#                 "abstract": paper.abstract if hasattr(paper, 'abstract') else None
+#             })
         
-        return json.dumps(papers_summary, indent=2)
+#         return json.dumps(papers_summary, indent=2)
 
-    except Exception as e:
-        logger.error(f"Semantic Scholar error: {e}")
-        # If Semantic Scholar fails, try arXiv as fallback
-        logger.info("Falling back to arXiv search...")
-        return search_arxiv(query, limit)
+#     except Exception as e:
+#         logger.error(f"Semantic Scholar error: {e}")
+#         # If Semantic Scholar fails, try arXiv as fallback
+#         logger.info("Falling back to arXiv search...")
+#         return search_arxiv(query, limit)
 
 def get_pdf_text_from_url(url: str, page_limit: int = 2) -> str:
     """
@@ -170,10 +172,11 @@ def get_pdf_text_from_url(url: str, page_limit: int = 2) -> str:
             return json.dumps({"error": "No text could be extracted from the PDF."})
 
         return json.dumps({
+            # cannot return the full text; will hog up the context window
             "text": extracted_text[:5000],  # Limit to first 5000 characters
             "pages_extracted": pages_to_extract,
             "total_pages": total_pages
         }, indent=2)
 
     except Exception as e:
-        return json.dumps({"error": f"An error occurred while processing the PDF: {e}"})
+        return json.dumps({"error": f"An error occurred while reading PDF: {e}"})

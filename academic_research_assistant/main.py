@@ -25,7 +25,10 @@ async def run_chat():
     
     # Create the agents and services
     pi_agent = create_pi_agent()
-    session_service = InMemorySessionService()
+    # Use persistent session service when configured (Redis), otherwise fall back
+    from academic_research_assistant.session_service import get_session_service
+
+    session_service = get_session_service()
     app_name = "academic_research_assistant"
     user_id = "user_1"
     session_id = f"session_{uuid.uuid4().hex[:8]}"
