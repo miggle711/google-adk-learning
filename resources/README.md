@@ -18,22 +18,7 @@ source .venv/bin/activate
 pip install -e .
 ```
 
-**Quick test**
-Try a small one-off invocation that loads the `simple-weather-agent` file and calls `get_weather` (uses the Open-Meteo APIs):
-
-```bash
-python - <<'PY'
-import runpy
-mod = runpy.run_path("simple-weather-agent/agent.py")
-print(mod['get_weather']('London'))
-PY
-```
-
 **Why share this repo?**
 - Contains end-to-end examples and notebooks showing real agent/tool interactions.
 - Demonstrates practical knowledge of Python tooling, API integration, and agent design patterns.
 
-**Resume blurb (example)**
-Built `academic_research_assistant`: a Python agent framework for literature retrieval and analysis; additional demos and notebooks in this repo showcase multi-agent patterns and tool usage.
-
-For details and runnable demos, start with [academic_research_assistant](academic_research_assistant#L1) and [simple-weather-agent](simple-weather-agent#L1).
